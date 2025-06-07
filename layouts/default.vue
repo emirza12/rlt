@@ -1,74 +1,57 @@
 <template>
-  <div class="min-h-screen bg-lightBg flex flex-col">
+  <div class="min-h-screen flex flex-col">
     <!-- Top Navigation Bar -->
-    <header class="bg-white shadow-sm h-16 flex items-center px-6 z-10">
-      <div class="flex justify-between w-full items-center">
-        <div class="flex items-center">
-          <NuxtLink to="/" class="text-2xl font-bold text-black">RLT</NuxtLink>
-        </div>
-        <div class="flex items-center space-x-4">
-          <div v-if="wallet.isConnected.value" class="text-sm bg-lightBg px-3 py-1 rounded-md">
-            <div class="flex items-center">
-              <span class="text-gray-500 mr-2">{{ shortAddress }}</span>
-              <span class="font-medium">{{ wallet.balance.value }} ETH</span>
+    <nav class="bg-white shadow-sm">
+      <div class="w-full">
+        <div class="flex justify-between h-16">
+          <!-- Left Side: Logo and Links -->
+          <div class="flex items-center">
+            <div class="flex items-center space-x-3 ml-10">
+              <img src="/logo.png" alt="RL Treasury Logo" class="h-8 w-auto" />
+              <NuxtLink to="/" class="text-2xl font-bold text-black">RL Treasury</NuxtLink>
+            </div>
+            <div class="flex items-center space-x-8 ml-16">
+              <CustomLink to="/">Home</CustomLink>
+              <CustomLink to="/deposit">Deposit</CustomLink>
+              <CustomLink to="/portfolio">Portfolio</CustomLink>
             </div>
           </div>
-          <BaseButton 
-            v-if="!wallet.isConnected.value" 
-            @click="wallet.connect" 
-            :loading="wallet.isConnecting.value"
-          >
-            Connect Wallet
-          </BaseButton>
-          <BaseButton 
-            v-else 
-            variant="outline" 
-            @click="wallet.disconnect"
-          >
-            Disconnect
-          </BaseButton>
+
+          <!-- Right Side: Wallet Connect -->
+          <div class="flex items-center mr-10">
+            <button class="bg-[#00DBCE] text-white px-6 py-2 rounded-lg hover:bg-[#00DBCE]/90 transition-colors">
+              Connect Wallet
+            </button>
+          </div>
         </div>
       </div>
-    </header>
+    </nav>
 
-    <div class="flex flex-1">
-      <!-- Left Sidebar -->
-      <aside class="w-64 bg-white shadow-sm">
-        <nav class="py-6 px-4">
-          <ul class="space-y-2">
-            <li>
-              <CustomLink to="/">Dashboard</CustomLink>
-            </li>
-            <li>
-              <CustomLink to="/portfolio">Portfolio</CustomLink>
-            </li>
-            <li>
-              <CustomLink to="/vault">Vault</CustomLink>
-            </li>
-            <li>
-              <CustomLink to="/rewards">Rewards</CustomLink>
-            </li>
-            <li>
-              <CustomLink to="/account">Account</CustomLink>
-            </li>
-          </ul>
-        </nav>
-      </aside>
-
-      <!-- Main Content Area -->
-      <main class="flex-1 p-6 overflow-auto">
-        <slot />
-      </main>
+    <!-- Main Content -->
+    <div class="flex-1">
+      <slot />
     </div>
+
+    <!-- Footer -->
+    <Footer />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { wallet } from '~/composables/useWallet'
+import CustomLink from '@/components/CustomLink.vue'
+import Footer from '@/components/Footer.vue'
+</script>
 
-const shortAddress = computed(() => {
-  if (!wallet.address.value) return ''
-  return wallet.address.value.slice(0, 6) + '...' + wallet.address.value.slice(-4)
-})
-</script> 
+<style scoped>
+nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+}
+
+.flex-1 {
+  margin-top: 4rem; /* Pour compenser la hauteur de la barre de navigation */
+}
+</style> 
