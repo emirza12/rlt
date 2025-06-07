@@ -29,8 +29,8 @@ let animationFrame: number
 
 const rotationStyle = computed(() => ({
   transform: `perspective(1000px) 
-    rotateX(${rotation.value.x + Math.sin(waveOffset.value) * 5}deg) 
-    rotateY(${rotation.value.y + Math.cos(waveOffset.value) * 5}deg)`
+    rotateX(${rotation.value.x + Math.sin(waveOffset.value) * 8}deg) 
+    rotateY(${rotation.value.y + Math.cos(waveOffset.value) * 8}deg)`
 }))
 
 function handleMouseMove(event: MouseEvent) {
@@ -51,7 +51,7 @@ function resetRotation() {
 }
 
 function animate() {
-  waveOffset.value = (waveOffset.value + 0.02) % (Math.PI * 2)
+  waveOffset.value = (waveOffset.value + 0.03) % (Math.PI * 2)
   animationFrame = requestAnimationFrame(animate)
 }
 
