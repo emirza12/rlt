@@ -1,75 +1,61 @@
-# Nuxt Minimal Starter
+## 1. 🎯 Pitch
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+RLUSD+ enables RLUSD stablecoin holders to earn real-world yield (simulated at 5% APY) by depositing tokens into XRPL “vaults.” In return, users receive a transferable MPToken with clawback functionality and identity verification for RWA compliance.
 
-## Setup
+## 2. 🎥 Demo Video
 
-Make sure to install dependencies:
+👉 Watch the demo (YouTube / Loom)
 
+Demo highlights:
+	•	Minting of RLUSD+ after deposit
+	•	Real-time yield accumulation
+	•	Identity compliance mock flow
+	•	Withdrawal process
+
+DevHack Tip: A 3–5 minute walkthrough combining live demo and technical explanation is highly effective  ￼.
+
+## 3. 📸 Screenshots
+
+## 4. ⚙️ How It Works on XRPL
+
+a) Deposit → Mint RLUSD+
+	•	User sends RLUSD to the vault via Payment.
+	•	Backend records wallet, amount, and timestamp.
+	•	MPToken RLUSD+ is minted by the issuer and sent via Payment.
+	•	User establishes a TrustSet for RLUSD+ token.
+
+b) Simulated Yield
+	•	Backend calculates yield as 5% APY * (now – depositTime).
+	•	RLUSD+ balance is adjusted accordingly (via rebase or updated display).
+
+c) Clawback & Compliance
+	•	The token is configured with a Clawback policy.
+	•	Admin can trigger a clawback to reclaim a portion if necessary.
+
+d) Withdrawal & Burn
+	•	User burns their RLUSD+ using Payment back to the issuer.
+	•	User receives original RLUSD + simulated yield (minus 0.1–0.3% withdrawal fee).
+
+All transactions occur on XRPL Testnet and are fully visible, fulfilling hackathon XRPL criteria  ￼.
+
+
+## 5. 🧪 Setup Instructions
 ```bash
-# npm
-npm install
-
-# pnpm
-pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
+git clone https://github.com/YourRepo/RLUSDPlus.git
+cd RLUSDPlus
+npm install         # frontend dependencies
+pip install -r requirements.txt  # backend dependencies
 ```
 
-## Development Server
+## 7. 📚 Tech Stack
+	•	Frontend: Nuxt
+	•	Backend: Node.js 
+	•	XRPL Integration: xrpl.js, MPToken issuance + clawback, Payment, TrustSet, Vault
+	•	Yield Simulation: Off-chain module using a <3.5% APY model
 
-Start the development server on `http://localhost:3000`:
 
-```bash
-# npm
-npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
-```
-
-## Production
-
-Build the application for production:
-
-```bash
-# npm
-npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
-```
-
-Locally preview production build:
-
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+## 8. 🚀 Roadmap
+	•	Integrate real RWA oracles via OpenEden
+	•	Automate on-chain yield with Hooks/XLS30
+	•	List RLUSD+ on XRPL DEX
+	•	Add real DID verification for regulatory compliance
