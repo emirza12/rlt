@@ -4,12 +4,10 @@
     
     <BaseCard title="Your Account">
       <div class="text-center py-8">
-        <p class="text-gray-600 mb-4">Connect your wallet to view your account details</p>
-        <BaseButton v-if="!wallet.isConnected.value" @click="wallet.connect" :loading="wallet.isConnecting.value">
-          Connect Wallet
-        </BaseButton>
+        <p class="text-gray-600 mb-4">Connect your XRPL wallet to view your account details</p>
+        <XRPLWalletConnect v-if="!wallet.isConnected.value" />
         <div v-else class="text-lg">
-          Coming soon...
+          Account details coming soon...
         </div>
       </div>
     </BaseCard>
@@ -18,6 +16,7 @@
 
 <script setup lang="ts">
 import { wallet } from '~/composables/useWallet'
+import XRPLWalletConnect from '~/components/XRPLWalletConnect.vue'
 
 definePageMeta({
   layout: 'default'

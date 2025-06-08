@@ -1,15 +1,13 @@
 <template>
   <div class="bg-background min-h-screen">
-    <h1 class="text-3xl font-bold mb-6 text-black">Vault</h1>
+    <h1 class="text-3xl font-bold mb-6 text-black">Your Vault</h1>
     
-    <BaseCard title="Your Vault">
+    <BaseCard title="Vault Access">
       <div class="text-center py-8">
-        <p class="text-gray-600 mb-4">Connect your wallet to view and manage your vault deposits</p>
-        <BaseButton v-if="!wallet.isConnected.value" @click="wallet.connect" :loading="wallet.isConnecting.value">
-          Connect Wallet
-        </BaseButton>
+        <p class="text-gray-600 mb-4">Connect your XRPL wallet to view and manage your vault deposits</p>
+        <XRPLWalletConnect v-if="!wallet.isConnected.value" />
         <div v-else class="text-lg">
-          Coming soon...
+          Welcome to your vault!
         </div>
       </div>
     </BaseCard>
@@ -18,6 +16,7 @@
 
 <script setup lang="ts">
 import { wallet } from '~/composables/useWallet'
+import XRPLWalletConnect from '~/components/XRPLWalletConnect.vue'
 
 definePageMeta({
   layout: 'default'

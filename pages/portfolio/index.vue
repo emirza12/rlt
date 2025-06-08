@@ -15,20 +15,14 @@
               <span class="font-medium text-[#00DBCE]">{{ shortAddress }}</span>
             </div>
           </div>
-          
-          <BaseButton v-else @click="wallet.connect" :loading="wallet.isConnecting.value">
-            Connect Wallet
-          </BaseButton>
         </div>
       </div>
 
       <!-- Connect wallet prompt if not connected -->
       <div v-if="!wallet.isConnected.value" class="bg-white rounded-2xl p-8 text-center">
-        <h2 class="text-2xl font-semibold mb-4">Connect Your Wallet</h2>
-        <p class="text-black/60 mb-6">Connect your wallet to view your vault position</p>
-        <BaseButton @click="wallet.connect" :loading="wallet.isConnecting.value" size="lg">
-          Connect Wallet
-        </BaseButton>
+        <h2 class="text-2xl font-semibold mb-4">Connect Your XRPL Wallet</h2>
+        <p class="text-black/60 mb-6">Connect your XRPL wallet to view your vault position</p>
+        <XRPLWalletConnect />
       </div>
 
       <!-- Vault Position -->
@@ -83,14 +77,50 @@
         </div>
       </div>
 
-      <!-- Withdraw Button -->
-      <div v-if="wallet.isConnected.value" class="mt-8 flex justify-center">
-        <button 
-          @click="handleWithdraw"
-          class="bg-[#00DBCE] text-white px-8 py-3 rounded-lg hover:bg-[#00DBCE]/90 transition-colors font-medium"
-        >
-          Withdraw RLUSD
-        </button>
+      <!-- Withdraw Section -->
+      <div v-if="wallet.isConnected.value" class="mt-8">
+        <div class="bg-white rounded-2xl p-8 shadow-sm">
+          <h2 class="text-xl font-semibold mb-6 text-black">Withdraw RLUSD</h2>
+          
+          <form @submit.prevent="handleWithdraw" class="space-y-6">
+            <!-- Amount Input -->
+            <div>
+              <label for="withdrawAmount" class="block text-sm font-medium text-black/80 mb-2">Amount to Withdraw</label>
+              <div class="relative">
+                <input
+                  type="number"
+                  id="withdrawAmount"
+                  v-model="withdrawAmount"
+                  class="w-full px-4 py-3 rounded-lg border border-black/10 focus:border-[#00DBCE] focus:ring-1 focus:ring-[#00DBCE] outline-none transition-all"
+                  placeholder="0.00"
+                  step="0.01"
+                  min="0"
+                  required
+                />
+                <div class="absolute right-4 top-1/2 -translate-y-1/2 text-black/60">RLUSD</div>
+              </div>
+            </div>
+
+            <!-- Max Button -->
+            <div class="flex justify-end">
+              <button
+                type="button"
+                @click="setMaxWithdrawAmount"
+                class="text-sm text-[#00DBCE] hover:text-[#00DBCE]/80 transition-colors"
+              >
+                Withdraw Max Available
+              </button>
+            </div>
+
+            <!-- Submit Button -->
+            <button
+              type="submit"
+              class="w-full bg-[#00DBCE] text-white py-3 rounded-lg hover:bg-[#00DBCE]/90 transition-colors font-medium"
+            >
+              Withdraw RLUSD
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   </div>
@@ -100,6 +130,8 @@
 import { computed, onMounted, watch } from 'vue'
 import { wallet } from '~/composables/useWallet'
 import { useTokenBalances } from '~/composables/useTokenBalances'
+import { toast } from '~/composables/useToast'
+import XRPLWalletConnect from '~/components/XRPLWalletConnect.vue'
 
 definePageMeta({
   layout: 'default'
@@ -112,9 +144,94 @@ const shortAddress = computed(() => {
   return wallet.address.value.slice(0, 6) + '...' + wallet.address.value.slice(-4)
 })
 
-const handleWithdraw = () => {
-  // TODO: Implement withdraw logic
-  console.log('Withdrawing funds...')
+const withdrawAmount = ref('')
+
+const handleWithdraw = async () => {
+  if (!wallet.isConnected.value) {
+    toast.warning('Please connect your wallet first')
+    return
+  }
+
+  if (!wallet.address.value) {
+    toast.warning('Wallet address not available')
+    return
+  }
+
+  if (!withdrawAmount.value) {
+    toast.warning('Please enter an amount to withdraw')
+    return
+  }
+
+  console.log('Starting withdraw request...')
+  console.log('Wallet address:', wallet.address.value)
+  console.log('Amount:', withdrawAmount.value)
+
+  try {
+    const requestBody = {
+      method: 'submit',
+      params: [{
+        tx_json: {
+          TransactionType: 'VaultWithdraw',
+          Account: wallet.address.value,
+          VaultID: 'B89B9DC7E1474CC0DA17F336877148CEB24C55BA73FA5155C78EF3DE20D4902D',
+          Amount: {
+            currency: '524C555344000000000000000000000000000000',
+            issuer: 'rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh',
+            value: withdrawAmount.value
+          }
+        },
+        secret: 'sEdVErV3Biz5uXBRAyKhL26zqenTHu6'
+      }]
+    }
+
+    console.log('Request body:', JSON.stringify(requestBody, null, 2))
+
+    const response = await fetch('http://localhost:5007', {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestBody)
+    })
+
+    console.log('Response status:', response.status)
+    console.log('Response headers:', response.headers)
+
+    // With no-cors mode, we can't read the response
+    if (response.type === 'opaque') {
+      toast.success('Withdraw request sent successfully!')
+      withdrawAmount.value = ''
+      // Refresh balances after successful withdrawal
+      tokenBalances.fetchBalances()
+    } else {
+      const result = await response.json()
+      console.log('Withdraw result:', result)
+      
+      if (response.ok) {
+        toast.success('Withdrawal successful!')
+        withdrawAmount.value = ''
+        // Refresh balances after successful withdrawal
+        tokenBalances.fetchBalances()
+      } else {
+        toast.error('Withdrawal failed: ' + (result.error || result.message || 'Unknown error'))
+      }
+    }
+  } catch (error) {
+    console.error('Withdraw error details:', error)
+    
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      toast.error('Connection failed: Unable to reach the server at localhost:5007. Please check if the server is running.')
+    } else if (error.name === 'NetworkError') {
+      toast.error('Network error: Please check your internet connection and server availability.')
+    } else {
+      toast.error('Error occurred: ' + error.message)
+    }
+  }
+}
+
+const setMaxWithdrawAmount = () => {
+  withdrawAmount.value = tokenBalances.currentValue
 }
 
 // Fetch token balances when component is mounted or wallet connection changes
