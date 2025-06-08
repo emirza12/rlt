@@ -87,6 +87,8 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { wallet } from '~/composables/useWallet'
+import { toast } from '~/composables/useToast'
 
 definePageMeta({
   layout: 'default'
@@ -99,8 +101,79 @@ const setMaxAmount = () => {
   amount.value = '1000' // Placeholder
 }
 
-const handleDeposit = () => {
-  // TODO: Implement deposit logic
-  console.log('Depositing:', amount.value)
+const handleDeposit = async () => {
+  if (!wallet.isConnected.value) {
+    toast.warning('Please connect your wallet first')
+    return
+  }
+
+  if (!amount.value) {
+    toast.warning('Please enter an amount to deposit')
+    return
+  }
+
+  console.log('Starting deposit request...')
+  console.log('Wallet address:', wallet.address.value)
+  console.log('Amount:', amount.value)
+
+  try {
+    const requestBody = {
+      method: 'submit',
+      params: [{
+        tx_json: {
+          TransactionType: 'VaultDeposit',
+          Account: wallet.address.value,
+          VaultID: 'B89B9DC7E1474CC0DA17F336877148CEB24C55BA73FA5155C78EF3DE20D4902D',
+          Amount: {
+            currency: '524C555344000000000000000000000000000000',
+            issuer: 'rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh',
+            value: amount.value
+          }
+        },
+        secret: 'sEdVErV3Biz5uXBRAyKhL26zqenTHu6'
+      }]
+    }
+
+    console.log('Request body:', JSON.stringify(requestBody, null, 2))
+
+    const response = await fetch('http://localhost:5007', {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestBody)
+    })
+
+    console.log('Response status:', response.status)
+    console.log('Response headers:', response.headers)
+
+    // With no-cors mode, we can't read the response
+    if (response.type === 'opaque') {
+      toast.success('Deposit request sent successfully!')
+      amount.value = ''
+    } else {
+      const result = await response.json()
+      console.log('Deposit result:', result)
+      
+      if (response.ok) {
+        toast.success('Deposit successful!')
+        amount.value = ''
+      } else {
+        toast.error('Deposit failed: ' + (result.error || result.message || 'Unknown error'))
+      }
+    }
+  } catch (error) {
+    console.error('Deposit error details:', error)
+    
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      toast.error('Connection failed: Unable to reach the server at localhost:5007. Please check if the server is running.')
+    } else if (error.name === 'NetworkError') {
+      toast.error('Network error: Please check your internet connection and server availability.')
+    } else {
+      toast.error('Error occurred: ' + error.message)
+    }
+  }
 }
+
 </script> 
