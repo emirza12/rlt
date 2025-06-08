@@ -6,6 +6,8 @@ RLUSD+ enables RLUSD stablecoin holders to earn real-world yield (simulated at 5
 
 👉 Watch the demo (YouTube / Loom)
 
+https://www.loom.com/share/cfa183bed4574a2ba79bf5a70c192812?sid=c6c3c931-53dc-4bef-82eb-9235bfad79e1
+
 Demo highlights:
 	•	Minting of RLUSD+ after deposit
 	•	Real-time yield accumulation
