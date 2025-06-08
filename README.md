@@ -18,6 +18,9 @@ DevHack Tip: A 3–5 minute walkthrough combining live demo and technical explan
 
 ## 3. 📸 Screenshots
 
+<img width="1283" alt="Screenshot 2025-06-08 at 10 15 57" src="https://github.com/user-attachments/assets/c4636a11-3622-4b7f-b504-0fdf84164681" />
+<img width="1267" alt="Screenshot 2025-06-08 at 10 16 10" src="https://github.com/user-attachments/assets/abab0fee-4b27-428e-9142-2e549b74eb4f" />
+
 ## 4. ⚙️ How It Works on XRPL
 
 a) Deposit → Mint RLUSD+
