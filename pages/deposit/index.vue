@@ -123,14 +123,14 @@ const handleDeposit = async () => {
         tx_json: {
           TransactionType: 'VaultDeposit',
           Account: wallet.address.value,
-          VaultID: 'B89B9DC7E1474CC0DA17F336877148CEB24C55BA73FA5155C78EF3DE20D4902D',
+          VaultID: '7FAA845867B900A4585A4B51D3D732F733674AF77619D0EFC36D08906A5BED45',
           Amount: {
             currency: '524C555344000000000000000000000000000000',
-            issuer: 'rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh',
+            issuer: 'rMWoqF5yBRQSLchYHTPiHfHLUfuP222r9y',
             value: amount.value
           }
         },
-        secret: 'sEdVErV3Biz5uXBRAyKhL26zqenTHu6'
+        secret: 'sEd7yWVnEMasR5ATJDR8R34cVoEumi3'
       }]
     }
 

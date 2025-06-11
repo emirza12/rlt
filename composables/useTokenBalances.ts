@@ -50,7 +50,7 @@ export const useTokenBalances = () => {
   
   // Vault and MPToken data
   const vaultData = ref<VaultData>({
-    MPTokenID: '0000000177C1246AC4F0B30BD602057D5A0EB6217CA19819',
+    MPTokenID: '0000000116C325670C3A796F1CF26364F2C5C41BCC7FC650',
     totalSupply: 0,
     totalHolders: 0,
     holders: [],

@@ -115,9 +115,16 @@
       <!-- Withdraw Section -->
       <div v-if="wallet.isConnected.value && !tokenBalances.isLoading.value && !tokenBalances.error.value" class="mt-8">
         <div class="bg-white rounded-2xl p-8 shadow-sm">
-          <h2 class="text-xl font-semibold mb-6 text-black">Withdraw RLUSD</h2>
+          <h2 class="text-xl font-semibold mb-6 text-black">Withdraw RLUSD+ + Rendement</h2>
           
           <form @submit.prevent="handleWithdraw" class="space-y-6">
+            <!-- Yield Information -->
+            <div class="bg-[#f8f9fa] rounded-lg p-4 mb-4">
+              <h3 class="font-medium mb-2">Yield to Receive</h3>
+              <div class="text-lg font-bold text-[#00DBCE]">+{{ FIXED_YIELD }} RLUSD+</div>
+              <div class="text-sm text-black/60 mt-1">Fixed yield per withdrawal</div>
+            </div>
+
             <!-- Amount Input -->
             <div>
               <label for="withdrawAmount" class="block text-sm font-medium text-black/80 mb-2">Amount to Withdraw</label>
@@ -130,13 +137,32 @@
                   placeholder="0.00"
                   step="0.01"
                   min="0"
-                  :max="tokenBalances.currentValue.value"
+                  :max="tokenBalances.currentRLT.value"
                   required
                 />
-                <div class="absolute right-4 top-1/2 -translate-y-1/2 text-black/60">RLUSD</div>
+                <div class="absolute right-4 top-1/2 -translate-y-1/2 text-black/60">RLUSD+</div>
               </div>
               <div class="text-sm text-black/60 mt-1">
-                Available: {{ tokenBalances.currentValue.value }} RLUSD
+                Available: {{ tokenBalances.currentRLT.value }} RLUSD+
+              </div>
+            </div>
+
+            <!-- Total withdrawal summary -->
+            <div v-if="withdrawAmount" class="bg-[#e8f8f7] rounded-lg p-4">
+              <h3 class="font-medium mb-2">Withdrawal Summary</h3>
+              <div class="space-y-1">
+                <div class="flex justify-between">
+                  <span>Requested Amount:</span>
+                  <span>{{ withdrawAmount }} RLUSD+</span>
+                </div>
+                <div class="flex justify-between">
+                  <span>Fixed Yield:</span>
+                  <span class="text-[#00DBCE]">+{{ FIXED_YIELD }} RLUSD+</span>
+                </div>
+                <div class="flex justify-between font-bold border-t pt-1">
+                  <span>Total to Receive:</span>
+                  <span>{{ (parseFloat(withdrawAmount) + FIXED_YIELD).toFixed(2) }} RLUSD+</span>
+                </div>
               </div>
             </div>
 
@@ -154,10 +180,10 @@
             <!-- Submit Button -->
             <button
               type="submit"
-              :disabled="!withdrawAmount || parseFloat(withdrawAmount) <= 0 || parseFloat(withdrawAmount) > parseFloat(tokenBalances.currentValue.value)"
+              :disabled="!withdrawAmount || parseFloat(withdrawAmount) <= 0 || parseFloat(withdrawAmount) > parseFloat(tokenBalances.currentRLT.value)"
               class="w-full bg-[#00DBCE] text-white py-3 rounded-lg hover:bg-[#00DBCE]/90 transition-colors font-medium disabled:bg-gray-300 disabled:cursor-not-allowed"
             >
-              Withdraw RLUSD
+              Withdraw with Yield
             </button>
           </form>
         </div>
@@ -179,6 +205,15 @@ definePageMeta({
 
 const tokenBalances = useTokenBalances()
 
+// Configuration fixe
+const FIXED_YIELD = 10 // Rendement fixe de 10 RLUSD par retrait
+const VAULT_ID = '7FAA845867B900A4585A4B51D3D732F733674AF77619D0EFC36D08906A5BED45'
+const RLUSD_ISSUER = 'rMWoqF5yBRQSLchYHTPiHfHLUfuP222r9y'
+const GENESIS_SECRET = 'snoPBrXtMeMyMHUVTgbuqAfg1SUTb'
+const GENESIS_ADDRESS = 'rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh'
+const USER_SECRET = 'sEd7yWVnEMasR5ATJDR8R34cVoEumi3'
+const MPT_ID = '0000000116C325670C3A796F1CF26364F2C5C41BCC7FC650'
+
 const shortAddress = computed(() => {
   if (!wallet.address.value) return ''
   return wallet.address.value.slice(0, 6) + '...' + wallet.address.value.slice(-4)
@@ -186,6 +221,29 @@ const shortAddress = computed(() => {
 
 const withdrawAmount = ref('')
 
+// Fonction pour envoyer une transaction via curl
+const sendTransaction = async (txData: any) => {
+  const requestBody = {
+    method: 'submit',
+    params: [txData]
+  }
+
+  console.log('Sending transaction:', JSON.stringify(requestBody, null, 2))
+
+  const response = await fetch('http://localhost:5007', {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(requestBody)
+  })
+
+  console.log('Transaction sent with status:', response.status)
+  return response
+}
+
+// Nouvelle fonction de retrait avec rendement
 const handleWithdraw = async () => {
   if (!wallet.isConnected.value) {
     toast.warning('Please connect your wallet first')
@@ -203,7 +261,7 @@ const handleWithdraw = async () => {
   }
 
   const amount = parseFloat(withdrawAmount.value)
-  const maxAmount = parseFloat(tokenBalances.currentValue.value)
+  const maxAmount = parseFloat(tokenBalances.currentRLT.value)
   
   if (amount <= 0) {
     toast.warning('Please enter a valid amount')
@@ -211,84 +269,101 @@ const handleWithdraw = async () => {
   }
   
   if (amount > maxAmount) {
-    toast.warning(`Amount exceeds available balance of ${maxAmount} RLUSD`)
+    toast.warning(`Amount exceeds available balance of ${maxAmount} RLUSD+`)
     return
   }
 
-  console.log('Starting withdraw request...')
-  console.log('Wallet address:', wallet.address.value)
-  console.log('Amount:', withdrawAmount.value)
+  console.log('🔄 Starting withdraw with yield process...')
+  console.log(`💰 User wants to withdraw: ${amount} RLUSD+`)
+  console.log(`🎁 Fixed yield to distribute: ${FIXED_YIELD} RLUSD+`)
 
   try {
-    const requestBody = {
-      method: 'submit',
-      params: [{
-        tx_json: {
-          TransactionType: 'VaultWithdraw',
-          Account: wallet.address.value,
-          VaultID: 'B89B9DC7E1474CC0DA17F336877148CEB24C55BA73FA5155C78EF3DE20D4902D',
-          Amount: {
-            currency: '524C555344000000000000000000000000000000',
-            issuer: 'rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh',
-            value: withdrawAmount.value
-          }
-        },
-        secret: 'sEdVErV3Biz5uXBRAyKhL26zqenTHu6'
-      }]
-    }
-
-    console.log('Request body:', JSON.stringify(requestBody, null, 2))
-
-    const response = await fetch('http://localhost:5007', {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: {
-        'Content-Type': 'application/json'
+    // Étape 1: Genesis dépose le rendement fixe dans le vault
+    console.log('🏦 Step 1: Genesis deposits yield into vault...')
+    const yieldDepositTx = {
+      tx_json: {
+        TransactionType: 'VaultDeposit',
+        Account: GENESIS_ADDRESS,
+        VaultID: VAULT_ID,
+        Amount: {
+          currency: '524C555344000000000000000000000000000000',
+          issuer: RLUSD_ISSUER,
+          value: FIXED_YIELD.toString()
+        }
       },
-      body: JSON.stringify(requestBody)
-    })
-
-    console.log('Response status:', response.status)
-    console.log('Response headers:', response.headers)
-
-    // With no-cors mode, we can't read the response
-    if (response.type === 'opaque') {
-      toast.success('Withdraw request sent successfully!')
-      withdrawAmount.value = ''
-      // Refresh balances after successful withdrawal
-      setTimeout(() => {
-        tokenBalances.fetchBalances()
-      }, 2000) // Wait 2 seconds for transaction to process
-    } else {
-      const result = await response.json()
-      console.log('Withdraw result:', result)
-      
-      if (response.ok) {
-        toast.success('Withdrawal successful!')
-        withdrawAmount.value = ''
-        // Refresh balances after successful withdrawal
-        setTimeout(() => {
-          tokenBalances.fetchBalances()
-        }, 2000)
-      } else {
-        toast.error('Withdrawal failed: ' + (result.error || result.message || 'Unknown error'))
-      }
+      secret: GENESIS_SECRET
     }
+
+    await sendTransaction(yieldDepositTx)
+    toast.info(`Genesis deposited ${FIXED_YIELD} RLUSD+ as yield`)
+    
+    // Attendre 2 secondes entre les transactions
+    await new Promise(resolve => setTimeout(resolve, 2000))
+
+    // Étape 2: Genesis envoie les RLUSD+ de rendement à l'utilisateur
+    console.log('💰 Step 2: Genesis sends yield RLUSD+ to user...')
+    const yieldSendTx = {
+      tx_json: {
+        TransactionType: 'Payment',
+        Account: GENESIS_ADDRESS,
+        Destination: wallet.address.value,
+        Amount: {
+          mpt_issuance_id: MPT_ID,
+          value: FIXED_YIELD.toString()
+        }
+      },
+      secret: GENESIS_SECRET
+    }
+
+    await sendTransaction(yieldSendTx)
+    toast.info(`Yield of ${FIXED_YIELD} RLUSD+ sent to user`)
+    
+    // Attendre 2 secondes entre les transactions
+    await new Promise(resolve => setTimeout(resolve, 2000))
+
+    // Étape 3: L'utilisateur retire le montant total (demandé + rendement)
+    const totalWithdrawAmount = amount + FIXED_YIELD
+    console.log(`🔄 Step 3: User withdraws total ${totalWithdrawAmount} RLUSD+...`)
+    
+    const userWithdrawTx = {
+      tx_json: {
+        TransactionType: 'VaultWithdraw',
+        Account: wallet.address.value,
+        VaultID: VAULT_ID,
+        Amount: {
+          mpt_issuance_id: MPT_ID,
+          value: totalWithdrawAmount.toString()
+        }
+      },
+      secret: USER_SECRET
+    }
+
+    await sendTransaction(userWithdrawTx)
+
+    // Success message
+    toast.success(`🎉 Withdrawal successful! You received ${totalWithdrawAmount} RLUSD+ (${amount} + ${FIXED_YIELD} yield)`)
+    withdrawAmount.value = ''
+    
+    // Refresh balances after successful withdrawal
+    setTimeout(() => {
+      tokenBalances.fetchBalances()
+    }, 3000) // Wait 3 seconds for all transactions to process
+
   } catch (error) {
     console.error('Withdraw error details:', error)
     
-    if (error instanceof TypeError && error.message.includes('fetch')) {
+    if (error instanceof TypeError && (error as any).message.includes('fetch')) {
       toast.error('Connection failed: Unable to reach the server at localhost:5007. Please check if the server is running.')
-    } else if (error.name === 'NetworkError') {
+    } else if ((error as any).name === 'NetworkError') {
       toast.error('Network error: Please check your internet connection and server availability.')
     } else {
-      toast.error('Error occurred: ' + error.message)
+      toast.error('Error occurred: ' + (error as any).message)
     }
   }
 }
 
 const setMaxWithdrawAmount = () => {
-  withdrawAmount.value = tokenBalances.currentValue.value
+  withdrawAmount.value = tokenBalances.currentRLT.value
 }
 
 // Fetch token balances when component is mounted or wallet connection changes

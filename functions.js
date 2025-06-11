@@ -330,8 +330,12 @@ export async function distributeYield(client, vaultId, MPTokenID, genesisWallet,
   
   for (const distribution of distributions) {
     if (distribution.roundedAmount > 0) {
-      await sendRLUSDPlusToHolder(client, genesisWallet, distribution.address, distribution.roundedAmount, MPTokenID);
-      console.log(`💰 ${distribution.address}: +${distribution.roundedAmount} RLUSD+ (proportion: ${(distribution.proportion * 100).toFixed(1)}%)`);
+      const result = await sendRLUSDPlusToHolder(client, genesisWallet, distribution.address, distribution.roundedAmount, MPTokenID);
+      if (result.selfPayment) {
+        console.log(`💰 ${distribution.address}: +${distribution.roundedAmount} RLUSD+ (proportion: ${(distribution.proportion * 100).toFixed(1)}%) - Auto-distribution (Genesis garde ses tokens)`);
+      } else {
+        console.log(`💰 ${distribution.address}: +${distribution.roundedAmount} RLUSD+ (proportion: ${(distribution.proportion * 100).toFixed(1)}%)`);
+      }
     } else {
       console.log(`⚠️ ${distribution.address}: aucun token à distribuer (proportion trop petite)`);
     }
@@ -350,6 +354,12 @@ export async function distributeYield(client, vaultId, MPTokenID, genesisWallet,
 
 // ✅ Fonction pour envoyer des RLUSD+ d'un wallet à un autre
 export async function sendRLUSDPlusToHolder(client, fromWallet, toAddress, amount, MPTokenID) {
+  // Vérifier si on essaie d'envoyer à soi-même
+  if (fromWallet.address === toAddress) {
+    console.log(`⚠️ Pas d'envoi nécessaire: ${fromWallet.address} est déjà le destinataire`);
+    return { success: true, amount: amount, selfPayment: true };
+  }
+  
   // Arrondir le montant avant l'envoi
   const roundedAmount = roundAmount(amount, 6);
   
